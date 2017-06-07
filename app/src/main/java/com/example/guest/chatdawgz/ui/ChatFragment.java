@@ -22,8 +22,12 @@ import com.example.guest.chatdawgz.models.Chat;
 import com.example.guest.chatdawgz.models.Message;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import org.parceler.Parcels;
 
@@ -41,6 +45,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     private FirebaseAuth mAuth;
     private FirebaseRecyclerAdapter mFirebaseAdapter;
     private DatabaseReference mChatMessagesRef;
+    private DatabaseReference rootRef;
 
     private Chat chat;
 
@@ -68,10 +73,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         unbinder = ButterKnife.bind(this, view);
         mAddRecipientButton.setOnClickListener(this);
         mSendMessageButton.setOnClickListener(this);
-        Log.d("chatfrag", "fragment loaded");
         updateVisibility();
         getActivity().findViewById(R.id.fab).setVisibility(View.GONE);
-        mChatMessagesRef = FirebaseDatabase.getInstance().getReference(Constants.FIREBASE_MESSAGE_REF).child(chat.getId());
+        rootRef = FirebaseDatabase.getInstance().getReference();
+        mChatMessagesRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chat.getId());
         setUpFirebaseAdapter();
 
         mAuth = FirebaseAuth.getInstance();
@@ -90,30 +95,35 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v == mAddRecipientButton) {
-            String recipient = mMessageRecipient.getText().toString();
-            chat.addUser(recipient);
-            DatabaseReference chatRef = FirebaseDatabase.getInstance()
-                    .getReference(Constants.FIREBASE_CHAT_REF)
-                    .child(chat.getId());
-            chatRef.setValue(chat);
-            //TO DO, Dawg: Get user id based on user name, add validation to user name in account creation
-            DatabaseReference userRef = FirebaseDatabase.getInstance()
-                    .getReference(Constants.FIREBASE_USER_REF)
-                    .child(recipient)
-                    .child("chats")
-                    .child(chatRef.getKey());
-            userRef.setValue(true);
-            updateVisibility();
+            final String recipient = mMessageRecipient.getText().toString();
+            Query query = rootRef.child(Constants.FIREBASE_USER_REF).orderByChild("name").equalTo(recipient);
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists() && (dataSnapshot.getChildrenCount() == 1)) {
+                        for (DataSnapshot user : dataSnapshot.getChildren()) {
+                            String recipientKey = user.getKey();
+                            chat.addUser(recipientKey);
+                            DatabaseReference chatRef = rootRef.child(Constants.FIREBASE_CHAT_REF).child(chat.getId());
+                            chatRef.setValue(chat);
+                            DatabaseReference userRef = rootRef.child(Constants.FIREBASE_USER_REF).child(recipientKey)
+                                    .child("chats").child(chatRef.getKey());
+                            userRef.setValue(true);
+                            getActivity().setTitle(recipient);
+                            updateVisibility();
+                        }
+                    }
+                }
+
+                @Override public void onCancelled(DatabaseError databaseError) {}
+            });
         }
         if (v == mSendMessageButton) {
             String message = mNewMessage.getText().toString();
             Message newMessage = new Message(mAuth.getCurrentUser().getUid(), message);
-            DatabaseReference messageRef = FirebaseDatabase.getInstance()
-                    .getReference(Constants.FIREBASE_MESSAGE_REF)
-                    .child(chat.getId())
-                    .push();
+            DatabaseReference messageRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chat.getId()).push();
             newMessage.setId(messageRef.getKey());
             messageRef.setValue(newMessage);
+            mNewMessage.setText("");
         }
     }
 
