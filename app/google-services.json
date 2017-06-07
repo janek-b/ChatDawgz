@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "621008158703",
+    "firebase_url": "https://chat-dawgz.firebaseio.com",
+    "project_id": "chat-dawgz",
+    "storage_bucket": "chat-dawgz.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621008158703:android:8caad1d4fd87bdbf",
+        "android_client_info": {
+          "package_name": "com.example.guest.chatdawgz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "621008158703-f505adiibm6u61smjr5b7412rlk7d0hb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.guest.chatdawgz",
+            "certificate_hash": "0776e4059e75f907ddd598bbca1ed944faf244ec"
+          }
+        },
+        {
+          "client_id": "621008158703-ofghpbkaauusklvccftjt5en807mri6p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXnM2qItGNuQa0giLF7w4pNpxJEeDL1SY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "621008158703-ofghpbkaauusklvccftjt5en807mri6p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
