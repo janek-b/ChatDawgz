@@ -4,8 +4,8 @@
 
 ### Activities
 - Main/ NavDrawer
-- LogIn
-- Register
+- LogIn (complete)
+- Register (complete)
 
 ### Fragments
 MVP
@@ -15,28 +15,30 @@ Tier 1
 - Contacts
 
 ### Dependencies
-- Firebase
-- Butterknife
-- Autotype/ Parceler/ Experimential!!
+- Firebase (complete)
+- Butterknife (complete)
+- Auto Value/ Parceler/ Experimential!!
 
 ### Data Models
 - Chat
   - id
   - users
-  - messages
 - Message
   - id
   - user
   - body
-  - timestamp
 - User
   - name
-  - image
+  - image (url)
   - chats
 
 ### Adapters
 - Message Adapter
 - User chats adapter
+
+### Methods
+- getChats(userId)
+- getMessages(chatId)
 
 ### Creative Theme(!)
 - Musical dogs that code
