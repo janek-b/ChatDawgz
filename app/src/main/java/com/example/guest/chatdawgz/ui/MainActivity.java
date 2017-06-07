@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -14,8 +16,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.guest.chatdawgz.Constants;
 import com.example.guest.chatdawgz.R;
+import com.example.guest.chatdawgz.models.Chat;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -36,8 +42,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                if (uid != null) {
+                    Chat newChat = new Chat();
+                    newChat.addUser(uid);
+                    DatabaseReference chatRef = FirebaseDatabase.getInstance()
+                            .getReference(Constants.FIREBASE_CHAT_REF).push();
+                    newChat.setId(chatRef.getKey());
+                    chatRef.setValue(newChat);
+                    DatabaseReference userRef = FirebaseDatabase.getInstance()
+                            .getReference(Constants.FIREBASE_USER_REF)
+                            .child(uid)
+                            .child("chats")
+                            .child(chatRef.getKey());
+                    userRef.setValue(true);
+                    loadFragment(ChatFragment.newInstance(newChat));
+                }
             }
         });
 
@@ -91,6 +111,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void loadFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(null).commit();
     }
 
     private void logout() {
