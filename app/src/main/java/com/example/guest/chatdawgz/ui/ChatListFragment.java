@@ -1,8 +1,11 @@
 package com.example.guest.chatdawgz.ui;
 
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -94,8 +97,13 @@ public class ChatListFragment extends Fragment {
             }
         };
         mChatListRecyclerView.setHasFixedSize(true);
-        mChatListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        mChatListRecyclerView.setLayoutManager(layoutManager);
         mChatListRecyclerView.setAdapter(mFirebaseAdapter);
+        Drawable divider = ContextCompat.getDrawable(getActivity(), R.drawable.divider);
+        DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(mChatListRecyclerView.getContext(), layoutManager.getOrientation());
+        mDividerItemDecoration.setDrawable(divider);
+        mChatListRecyclerView.addItemDecoration(mDividerItemDecoration);
     }
 
 }

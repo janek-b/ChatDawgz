@@ -16,6 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.guest.chatdawgz.Constants;
 import com.example.guest.chatdawgz.R;
@@ -26,6 +28,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,10 +41,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @BindView(R.id.fab) FloatingActionButton fab;
     @BindView(R.id.drawer_layout) DrawerLayout drawer;
     @BindView(R.id.nav_view) NavigationView navigationView;
-    private DatabaseReference ref;
+//    @BindView(R.id.userNameTextView) TextView mUserNameTextView;
+//    @BindView(R.id.profileImg) ImageView mProfileImg;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseUser currentUser;
+    private TextView mUserNameTextView;
+    private ImageView mProfileImg;
 
 
     @Override
@@ -50,13 +56,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-        ref = FirebaseDatabase.getInstance().getReference();
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 loadFragment(new CreateChatFragment());
-//                createChat();
             }
         });
 
@@ -65,7 +69,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
-
+        View header = navigationView.getHeaderView(0);
+        mUserNameTextView = (TextView) header.findViewById(R.id.userNameTextView);
+        mProfileImg = (ImageView) header.findViewById(R.id.profileImg);
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -73,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     currentUser = user;
+                    mUserNameTextView.setText(user.getDisplayName().toString());
+                    Picasso.with(MainActivity.this).load(user.getPhotoUrl()).into(mProfileImg);
                     loadFragment(new ChatListFragment());
                 } else {
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -108,34 +116,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
+        if (id == R.id.nav_home) {
+            loadFragment(new ChatListFragment());
         } else if (id == R.id.nav_logout) {
             logout();
         }
@@ -155,26 +141,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         startActivity(intent);
         finish();
     }
-
-//    private void createChat() {
-//        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-//        if (uid != null) {
-//            final Chat newChat = new Chat();
-//            newChat.addUser(uid);
-//            String chatKey = ref.child(Constants.FIREBASE_CHAT_REF).push().getKey();
-//            newChat.setId(chatKey);
-//            Map updateValues = new HashMap();
-//            updateValues.put(String.format("%s/%s/", Constants.FIREBASE_CHAT_REF, chatKey), newChat);
-//            updateValues.put(String.format("%s/%s/chats/%s/", Constants.FIREBASE_USER_REF, uid, chatKey), true);
-//            ref.updateChildren(updateValues).addOnCompleteListener(MainActivity.this, new OnCompleteListener() {
-//                @Override public void onComplete(@NonNull Task task) {
-//                    if (task.isSuccessful()) {
-//                        loadFragment(ChatFragment.newInstance(newChat));
-//                    }
-//                }
-//            });
-//        }
-//    }
 
     public FirebaseUser getUser() {
         return currentUser;

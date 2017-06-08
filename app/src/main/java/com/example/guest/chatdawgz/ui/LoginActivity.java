@@ -2,6 +2,7 @@ package com.example.guest.chatdawgz.ui;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @BindView(R.id.enterPassword) EditText mEnterPassword;
     @BindView(R.id.createAccountButton) Button mLoginButton;
     @BindView(R.id.createAccount) TextView mCreateAccount;
+    @BindView(R.id.loginHeader) TextView mLoginHeader;
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
@@ -49,6 +51,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             }
         };
         createAuthProgressDialog();
+
+        Typeface headerFont = Typeface.createFromAsset(getAssets(), "fonts/font.TTF");
+        mLoginHeader.setTypeface(headerFont);
 
         mLoginButton.setOnClickListener(this);
         mCreateAccount.setOnClickListener(this);
