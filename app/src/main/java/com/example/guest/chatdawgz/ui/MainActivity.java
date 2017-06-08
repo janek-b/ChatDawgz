@@ -2,6 +2,7 @@ package com.example.guest.chatdawgz.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -19,9 +20,14 @@ import android.view.MenuItem;
 import com.example.guest.chatdawgz.Constants;
 import com.example.guest.chatdawgz.R;
 import com.example.guest.chatdawgz.models.Chat;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -31,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @BindView(R.id.fab) FloatingActionButton fab;
     @BindView(R.id.drawer_layout) DrawerLayout drawer;
     @BindView(R.id.nav_view) NavigationView navigationView;
+    DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,22 +49,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                if (uid != null) {
-                    Chat newChat = new Chat();
-                    newChat.addUser(uid);
-                    DatabaseReference chatRef = FirebaseDatabase.getInstance()
-                            .getReference(Constants.FIREBASE_CHAT_REF).push();
-                    newChat.setId(chatRef.getKey());
-                    chatRef.setValue(newChat);
-                    DatabaseReference userRef = FirebaseDatabase.getInstance()
-                            .getReference(Constants.FIREBASE_USER_REF)
-                            .child(uid)
-                            .child("chats")
-                            .child(chatRef.getKey());
-                    userRef.setValue(true);
-                    loadFragment(ChatFragment.newInstance(newChat));
-                }
+                createChat();
             }
         });
 
@@ -124,5 +116,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void createChat() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        if (uid != null) {
+            final Chat newChat = new Chat();
+            newChat.addUser(uid);
+            String chatKey = ref.child(Constants.FIREBASE_CHAT_REF).push().getKey();
+            newChat.setId(chatKey);
+            Map updateValues = new HashMap();
+            updateValues.put(String.format("%s/%s/", Constants.FIREBASE_CHAT_REF, chatKey), newChat);
+            updateValues.put(String.format("%s/%s/chats/%s/", Constants.FIREBASE_USER_REF, uid, chatKey), true);
+            ref.updateChildren(updateValues).addOnCompleteListener(MainActivity.this, new OnCompleteListener() {
+                @Override public void onComplete(@NonNull Task task) {
+                    if (task.isSuccessful()) {
+                        loadFragment(ChatFragment.newInstance(newChat));
+                    }
+                }
+            });
+        }
     }
 }

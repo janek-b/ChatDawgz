@@ -3,6 +3,7 @@ package com.example.guest.chatdawgz.ui;
 
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -21,6 +22,8 @@ import com.example.guest.chatdawgz.adapters.FirebaseMessageViewHolder;
 import com.example.guest.chatdawgz.models.Chat;
 import com.example.guest.chatdawgz.models.Message;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,6 +33,9 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import org.parceler.Parcels;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -101,19 +107,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
                 @Override public void onDataChange(DataSnapshot dataSnapshot) {
                     if (dataSnapshot.exists() && (dataSnapshot.getChildrenCount() == 1)) {
                         for (DataSnapshot user : dataSnapshot.getChildren()) {
-                            String recipientKey = user.getKey();
-                            chat.addUser(recipientKey);
-                            DatabaseReference chatRef = rootRef.child(Constants.FIREBASE_CHAT_REF).child(chat.getId());
-                            chatRef.setValue(chat);
-                            DatabaseReference userRef = rootRef.child(Constants.FIREBASE_USER_REF).child(recipientKey)
-                                    .child("chats").child(chatRef.getKey());
-                            userRef.setValue(true);
-                            getActivity().setTitle(recipient);
-                            updateVisibility();
+                            addRecipient(user.getKey(), recipient);
                         }
                     }
                 }
-
                 @Override public void onCancelled(DatabaseError databaseError) {}
             });
         }
@@ -153,6 +150,21 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         mChatRecyclerView.setHasFixedSize(true);
         mChatRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mChatRecyclerView.setAdapter(mFirebaseAdapter);
+    }
+
+    private void addRecipient(final String recipientKey, final String recipient) {
+        chat.addUser(recipientKey);
+        Map updates = new HashMap();
+        updates.put(String.format("%s/%s/", Constants.FIREBASE_CHAT_REF, chat.getId()), chat);
+        updates.put(String.format("%s/%s/chats/%s", Constants.FIREBASE_USER_REF, recipientKey, chat.getId()), true);
+        rootRef.updateChildren(updates).addOnCompleteListener(getActivity(), new OnCompleteListener() {
+            @Override public void onComplete(@NonNull Task task) {
+                if (task.isSuccessful()) {
+                    getActivity().setTitle(recipient);
+                    updateVisibility();
+                }
+            }
+        });
     }
 
 }
