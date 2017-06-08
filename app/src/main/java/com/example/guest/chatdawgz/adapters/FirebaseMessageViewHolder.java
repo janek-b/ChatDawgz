@@ -36,7 +36,7 @@ public class FirebaseMessageViewHolder extends RecyclerView.ViewHolder {
         ImageView recipientImage = (ImageView) mView.findViewById(R.id.recipientImage);
         Space recipientSpace = (Space) mView.findViewById(R.id.recipient_space);
         Space userSpace = (Space) mView.findViewById(R.id.user_space);
-        if (sender) {
+        if (!message.getSender().equals(recipient.getId())) {
             messageLayout.setGravity(Gravity.END);
             recipientSpace.setVisibility(View.GONE);
             userSpace.setVisibility(View.VISIBLE);

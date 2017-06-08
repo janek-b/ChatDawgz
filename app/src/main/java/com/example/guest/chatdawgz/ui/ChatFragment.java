@@ -110,13 +110,17 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
             newMessage.setId(messageRef.getKey());
             messageRef.setValue(newMessage);
             mNewMessage.setText("");
-            mChatRecyclerView.smoothScrollToPosition(mFirebaseAdapter.getItemCount());
         }
     }
 
     private void setUpFirebaseAdapter() {
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Message, FirebaseMessageViewHolder>(Message.class,
                 R.layout.message_list_item, FirebaseMessageViewHolder.class, mChatMessagesRef) {
+            @Override protected void onDataChanged() {
+                super.onDataChanged();
+                mChatRecyclerView.smoothScrollToPosition(mFirebaseAdapter.getItemCount());
+            }
+
             @Override
             protected void populateViewHolder(FirebaseMessageViewHolder viewHolder, Message model, int position) {
                 viewHolder.bindMessage(model, recipient, model.getSender().equals(user.getId()));
