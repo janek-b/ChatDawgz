@@ -42,10 +42,8 @@ import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
 public class ChatFragment extends Fragment implements View.OnClickListener {
-    @BindView(R.id.messageRecipient) EditText mMessageRecipient;
     @BindView(R.id.newMessage) EditText mNewMessage;
     @BindView(R.id.sendMessageButton) ImageButton mSendMessageButton;
-    @BindView(R.id.addRecipientButton) ImageButton mAddRecipientButton;
     @BindView(R.id.chatRecyclerView) RecyclerView mChatRecyclerView;
     private Unbinder unbinder;
     private FirebaseAuth mAuth;
@@ -77,9 +75,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
         unbinder = ButterKnife.bind(this, view);
-        mAddRecipientButton.setOnClickListener(this);
         mSendMessageButton.setOnClickListener(this);
-        updateVisibility();
         getActivity().findViewById(R.id.fab).setVisibility(View.GONE);
         rootRef = FirebaseDatabase.getInstance().getReference();
         mChatMessagesRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chat.getId());
@@ -100,20 +96,6 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        if (v == mAddRecipientButton) {
-            final String recipient = mMessageRecipient.getText().toString();
-            Query query = rootRef.child(Constants.FIREBASE_USER_REF).orderByChild("name").equalTo(recipient);
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.exists() && (dataSnapshot.getChildrenCount() == 1)) {
-                        for (DataSnapshot user : dataSnapshot.getChildren()) {
-                            addRecipient(user.getKey(), recipient);
-                        }
-                    }
-                }
-                @Override public void onCancelled(DatabaseError databaseError) {}
-            });
-        }
         if (v == mSendMessageButton) {
             String message = mNewMessage.getText().toString();
             Message newMessage = new Message(mAuth.getCurrentUser().getUid(), message);
@@ -124,25 +106,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public void updateVisibility() {
-        if (chat.getUsers().size() < 2) {
-            mNewMessage.setVisibility(View.GONE);
-            mSendMessageButton.setVisibility(View.GONE);
-            mMessageRecipient.setVisibility(View.VISIBLE);
-            mAddRecipientButton.setVisibility(View.VISIBLE);
-        } else {
-            mNewMessage.setVisibility(View.VISIBLE);
-            mSendMessageButton.setVisibility(View.VISIBLE);
-            mMessageRecipient.setVisibility(View.GONE);
-            mAddRecipientButton.setVisibility(View.GONE);
-
-        }
-    }
-
     private void setUpFirebaseAdapter() {
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Message, FirebaseMessageViewHolder>(Message.class,
                 R.layout.message_item, FirebaseMessageViewHolder.class, mChatMessagesRef) {
-                @Override
+            @Override
             protected void populateViewHolder(FirebaseMessageViewHolder viewHolder, Message model, int position) {
                 viewHolder.bindMessage(model);
             }
@@ -150,21 +117,6 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         mChatRecyclerView.setHasFixedSize(true);
         mChatRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mChatRecyclerView.setAdapter(mFirebaseAdapter);
-    }
-
-    private void addRecipient(final String recipientKey, final String recipient) {
-        chat.addUser(recipientKey);
-        Map updates = new HashMap();
-        updates.put(String.format("%s/%s/", Constants.FIREBASE_CHAT_REF, chat.getId()), chat);
-        updates.put(String.format("%s/%s/chats/%s", Constants.FIREBASE_USER_REF, recipientKey, chat.getId()), true);
-        rootRef.updateChildren(updates).addOnCompleteListener(getActivity(), new OnCompleteListener() {
-            @Override public void onComplete(@NonNull Task task) {
-                if (task.isSuccessful()) {
-                    getActivity().setTitle(recipient);
-                    updateVisibility();
-                }
-            }
-        });
     }
 
 }
