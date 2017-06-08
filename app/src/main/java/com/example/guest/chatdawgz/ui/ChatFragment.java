@@ -21,6 +21,7 @@ import com.example.guest.chatdawgz.R;
 import com.example.guest.chatdawgz.adapters.FirebaseMessageViewHolder;
 import com.example.guest.chatdawgz.models.Chat;
 import com.example.guest.chatdawgz.models.Message;
+import com.example.guest.chatdawgz.models.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -51,25 +52,29 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     private DatabaseReference mChatMessagesRef;
     private DatabaseReference rootRef;
 
-    private Chat chat;
+    private User user;
+    private User recipient;
+    private String chatId;
 
-    public static ChatFragment newInstance(@Nullable Chat chat) {
+    public static ChatFragment newInstance(String chatId, User user, User recipient) {
         ChatFragment chatFragment = new ChatFragment();
-        if (chat != null) {
-            Bundle args = new Bundle();
-            args.putParcelable("chat", Parcels.wrap(chat));
-            chatFragment.setArguments(args);
-        }
+        Bundle args = new Bundle();
+        args.putParcelable("user", Parcels.wrap(user));
+        args.putParcelable("recipient", Parcels.wrap(recipient));
+        args.putString("chatId", chatId);
+        chatFragment.setArguments(args);
         return chatFragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments().getParcelable("chat") != null) {
-            chat = Parcels.unwrap(getArguments().getParcelable("chat"));
-        }
+        Bundle args = getArguments();
+        user = Parcels.unwrap(args.getParcelable("user"));
+        recipient = Parcels.unwrap(args.getParcelable("recipient"));
+        chatId = args.getString("chatId");
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -77,8 +82,9 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         unbinder = ButterKnife.bind(this, view);
         mSendMessageButton.setOnClickListener(this);
         getActivity().findViewById(R.id.fab).setVisibility(View.GONE);
+        getActivity().setTitle(recipient.getName());
         rootRef = FirebaseDatabase.getInstance().getReference();
-        mChatMessagesRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chat.getId());
+        mChatMessagesRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chatId);
         setUpFirebaseAdapter();
 
         mAuth = FirebaseAuth.getInstance();
@@ -99,7 +105,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         if (v == mSendMessageButton) {
             String message = mNewMessage.getText().toString();
             Message newMessage = new Message(mAuth.getCurrentUser().getUid(), message);
-            DatabaseReference messageRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chat.getId()).push();
+            DatabaseReference messageRef = rootRef.child(Constants.FIREBASE_MESSAGE_REF).child(chatId).push();
             newMessage.setId(messageRef.getKey());
             messageRef.setValue(newMessage);
             mNewMessage.setText("");

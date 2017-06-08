@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.example.guest.chatdawgz.R;
 import com.example.guest.chatdawgz.models.Chat;
+import com.example.guest.chatdawgz.models.User;
 import com.example.guest.chatdawgz.ui.ChatFragment;
 import com.example.guest.chatdawgz.ui.MainActivity;
 
@@ -19,6 +20,8 @@ public class FirebaseChatViewHolder extends RecyclerView.ViewHolder implements V
     View mView;
     Context mContext;
     Chat mChat;
+    User mUser;
+    User mRecipient;
 
     public FirebaseChatViewHolder(View itemView) {
         super(itemView);
@@ -27,15 +30,16 @@ public class FirebaseChatViewHolder extends RecyclerView.ViewHolder implements V
         itemView.setOnClickListener(this);
     }
 
-    public void bindChat(Chat chat) {
+    public void bindChat(Chat chat, User user, User recipient) {
         mChat = chat;
+        mUser = user;
+        mRecipient = recipient;
         TextView chatTitle = (TextView) mView.findViewById(R.id.chatTitleTextView);
-        chatTitle.setText(chat.getUsers().keySet().toArray()[0].toString());
+        chatTitle.setText(mRecipient.getName());
     }
 
     @Override
     public void onClick(View v) {
-        Log.d("chatViewHolder", "click");
-        ((MainActivity)mContext).loadFragment(ChatFragment.newInstance(mChat));
+        ((MainActivity)mContext).loadFragment(ChatFragment.newInstance(mChat.getId(), mUser, mRecipient));
     }
 }

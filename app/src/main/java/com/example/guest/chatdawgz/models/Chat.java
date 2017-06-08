@@ -2,7 +2,9 @@ package com.example.guest.chatdawgz.models;
 
 import org.parceler.Parcel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Parcel
@@ -26,5 +28,11 @@ public class Chat {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public List<String> getUserKeys() {
+        List<String> chatKeys = new ArrayList<>(users.keySet());
+        return chatKeys;
+//        return new ArrayList<>(chats.keySet());
     }
 }

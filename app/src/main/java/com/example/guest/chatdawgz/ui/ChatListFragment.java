@@ -13,12 +13,16 @@ import com.example.guest.chatdawgz.Constants;
 import com.example.guest.chatdawgz.R;
 import com.example.guest.chatdawgz.adapters.FirebaseChatViewHolder;
 import com.example.guest.chatdawgz.models.Chat;
+import com.example.guest.chatdawgz.models.User;
 import com.firebase.ui.database.FirebaseIndexRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -36,6 +40,7 @@ public class ChatListFragment extends Fragment {
     private DatabaseReference rootRef;
     private FirebaseUser currentUser;
     private FirebaseAuth mAuth;
+    private User user;
 
     public ChatListFragment() {
         // Required empty public constructor
@@ -52,6 +57,16 @@ public class ChatListFragment extends Fragment {
         mUserChatKeyRef = rootRef.child(Constants.FIREBASE_USER_REF).child(currentUser.getUid()).child("chats");
         mChatRef = rootRef.child(Constants.FIREBASE_CHAT_REF);
 
+        DatabaseReference userRef = rootRef.child(Constants.FIREBASE_USER_REF).child(currentUser.getUid());
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override public void onDataChange(DataSnapshot dataSnapshot) {
+                user = dataSnapshot.getValue(User.class);
+
+            }
+
+            @Override public void onCancelled(DatabaseError databaseError) {}
+        });
+
         setUpFirebaseAdapter();
         return view;
     }
@@ -66,8 +81,19 @@ public class ChatListFragment extends Fragment {
         mFirebaseAdapter = new FirebaseIndexRecyclerAdapter<Chat, FirebaseChatViewHolder>(Chat.class,
                 R.layout.chat_list_item, FirebaseChatViewHolder.class, mUserChatKeyRef, mChatRef) {
             @Override
-            protected void populateViewHolder(FirebaseChatViewHolder viewHolder, Chat model, int position) {
-                viewHolder.bindChat(model);
+            protected void populateViewHolder(final FirebaseChatViewHolder viewHolder, final Chat model, int position) {
+                for (String userKey : model.getUserKeys()) {
+                    if (!userKey.equals(user.getId())) {
+                        DatabaseReference recipientRef = rootRef.child(Constants.FIREBASE_USER_REF).child(userKey);
+                        recipientRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override public void onDataChange(DataSnapshot dataSnapshot) {
+                                User recipient = dataSnapshot.getValue(User.class);
+                                viewHolder.bindChat(model, user, recipient);
+                            }
+                            @Override public void onCancelled(DatabaseError databaseError) {}
+                        });
+                    }
+                }
             }
         };
         mChatListRecyclerView.setHasFixedSize(true);

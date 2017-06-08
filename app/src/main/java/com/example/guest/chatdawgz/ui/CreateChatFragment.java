@@ -13,6 +13,7 @@ import android.widget.ImageButton;
 import com.example.guest.chatdawgz.Constants;
 import com.example.guest.chatdawgz.R;
 import com.example.guest.chatdawgz.models.Chat;
+import com.example.guest.chatdawgz.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -74,11 +75,8 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
                 @Override public void onDataChange(DataSnapshot dataSnapshot) {
                     if (dataSnapshot.exists() && (dataSnapshot.getChildrenCount() == 1)) {
                         for (DataSnapshot user : dataSnapshot.getChildren()) {
-                            final List<String> recipientChatKeys = new ArrayList<>();
-                            for (DataSnapshot chat : user.child("chats").getChildren()) {
-                                recipientChatKeys.add(chat.getKey());
-                            }
-                            addRecipient(user.getKey(), recipient, recipientChatKeys);
+                            User recipientUser = user.getValue(User.class);
+                            addRecipient(recipientUser);
                         }
                     }
                 }
@@ -88,50 +86,37 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     }
 
 
-    private void addRecipient(final String recipientKey, final String recipient, final List<String> recipientChatKeys) {
+    private void addRecipient(final User recipient) {
         final String userId = mAuth.getCurrentUser().getUid();
-        final List<String> userChatKeys = new ArrayList<>();
-        DatabaseReference userChatsRef = rootRef.child(Constants.FIREBASE_USER_REF).child(userId).child("chats");
-        userChatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference userRef = rootRef.child(Constants.FIREBASE_USER_REF).child(userId);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot chat : dataSnapshot.getChildren()) {
-                    userChatKeys.add(chat.getKey());
-                }
-                compareChats(userChatKeys, recipientChatKeys, recipientKey, recipient, userId);
+                User user = dataSnapshot.getValue(User.class);
+                compareUserChats(user, recipient);
             }
-
-            @Override public void onCancelled(DatabaseError databaseError) {
-            }
+            @Override public void onCancelled(DatabaseError databaseError) {}
         });
     }
 
-    public void compareChats(List<String> userChatKeys, List<String> recipientChatKeys, final String recipientKey, final String recipient, final String userId) {
-        List<String> commonChats = new ArrayList<>(userChatKeys);
-        commonChats.retainAll(recipientChatKeys);
+    public void compareUserChats(final User user, final User recipient) {
+        List<String> commonChats = new ArrayList<>(user.getChatKeys());
+        commonChats.retainAll(recipient.getChatKeys());
         if (commonChats.size() > 0) {
-            DatabaseReference existingChat = rootRef.child(Constants.FIREBASE_CHAT_REF).child(commonChats.get(0));
-            existingChat.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override public void onDataChange(DataSnapshot dataSnapshot) {
-                    Chat thisChat = dataSnapshot.getValue(Chat.class);
-                    ((MainActivity)getActivity()).loadFragment(ChatFragment.newInstance(thisChat));
-                }
-                @Override public void onCancelled(DatabaseError databaseError) {}
-            });
+            ((MainActivity)getActivity()).loadFragment(ChatFragment.newInstance(commonChats.get(0), user, recipient));
         } else {
-            String chatKey = rootRef.child(Constants.FIREBASE_CHAT_REF).push().getKey();
+            final String chatKey = rootRef.child(Constants.FIREBASE_CHAT_REF).push().getKey();
             final Chat newChat = new Chat();
-            newChat.addUser(userId);
-            newChat.addUser(recipientKey);
+            newChat.addUser(user.getId());
+            newChat.addUser(recipient.getId());
             newChat.setId(chatKey);
             Map updateValues = new HashMap();
             updateValues.put(String.format("%s/%s/", Constants.FIREBASE_CHAT_REF, chatKey), newChat);
-            updateValues.put(String.format("%s/%s/chats/%s/", Constants.FIREBASE_USER_REF, userId, chatKey), true);
-            updateValues.put(String.format("%s/%s/chats/%s/", Constants.FIREBASE_USER_REF, recipientKey, chatKey), true);
+            updateValues.put(String.format("%s/%s/chats/%s/", Constants.FIREBASE_USER_REF, user.getId(), chatKey), true);
+            updateValues.put(String.format("%s/%s/chats/%s/", Constants.FIREBASE_USER_REF, recipient.getId(), chatKey), true);
             rootRef.updateChildren(updateValues).addOnCompleteListener(getActivity(), new OnCompleteListener() {
                 @Override public void onComplete(@NonNull Task task) {
                     if (task.isSuccessful()) {
-                        ((MainActivity)getActivity()).loadFragment(ChatFragment.newInstance(newChat));
-                        getActivity().setTitle(recipient);
+                        ((MainActivity)getActivity()).loadFragment(ChatFragment.newInstance(chatKey, user, recipient));
                     }
                 }
             });

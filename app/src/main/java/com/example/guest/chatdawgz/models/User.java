@@ -3,7 +3,9 @@ package com.example.guest.chatdawgz.models;
 
 import org.parceler.Parcel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Parcel
@@ -42,5 +44,11 @@ public class User {
 
     public Map<String, Boolean> getChats() {
         return chats;
+    }
+
+    public List<String> getChatKeys() {
+        List<String> chatKeys = new ArrayList<>(chats.keySet());
+        return chatKeys;
+//        return new ArrayList<>(chats.keySet());
     }
 }
