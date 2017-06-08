@@ -51,6 +51,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     private FirebaseRecyclerAdapter mFirebaseAdapter;
     private DatabaseReference mChatMessagesRef;
     private DatabaseReference rootRef;
+    LinearLayoutManager linearLayoutManager;
 
     private User user;
     private User recipient;
@@ -109,19 +110,22 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
             newMessage.setId(messageRef.getKey());
             messageRef.setValue(newMessage);
             mNewMessage.setText("");
+            mChatRecyclerView.smoothScrollToPosition(mFirebaseAdapter.getItemCount());
         }
     }
 
     private void setUpFirebaseAdapter() {
         mFirebaseAdapter = new FirebaseRecyclerAdapter<Message, FirebaseMessageViewHolder>(Message.class,
-                R.layout.message_item, FirebaseMessageViewHolder.class, mChatMessagesRef) {
+                R.layout.message_list_item, FirebaseMessageViewHolder.class, mChatMessagesRef) {
             @Override
             protected void populateViewHolder(FirebaseMessageViewHolder viewHolder, Message model, int position) {
-                viewHolder.bindMessage(model);
+                viewHolder.bindMessage(model, recipient, model.getSender().equals(user.getId()));
             }
         };
         mChatRecyclerView.setHasFixedSize(true);
-        mChatRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager.setStackFromEnd(true);
+        mChatRecyclerView.setLayoutManager(linearLayoutManager);
         mChatRecyclerView.setAdapter(mFirebaseAdapter);
     }
 

@@ -61,13 +61,10 @@ public class ChatListFragment extends Fragment {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override public void onDataChange(DataSnapshot dataSnapshot) {
                 user = dataSnapshot.getValue(User.class);
-
+                setUpFirebaseAdapter();
             }
-
             @Override public void onCancelled(DatabaseError databaseError) {}
         });
-
-        setUpFirebaseAdapter();
         return view;
     }
 
