@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.example.guest.chatdawgz.R;
 import com.example.guest.chatdawgz.models.Message;
 import com.example.guest.chatdawgz.models.User;
+import com.google.firebase.auth.FirebaseAuth;
 import com.squareup.picasso.Picasso;
 
 public class FirebaseMessageViewHolder extends RecyclerView.ViewHolder {
@@ -22,6 +23,7 @@ public class FirebaseMessageViewHolder extends RecyclerView.ViewHolder {
 
     View mView;
     Context mContext;
+
 
     public FirebaseMessageViewHolder(View itemView) {
         super(itemView);
@@ -36,7 +38,7 @@ public class FirebaseMessageViewHolder extends RecyclerView.ViewHolder {
         ImageView recipientImage = (ImageView) mView.findViewById(R.id.recipientImage);
         Space recipientSpace = (Space) mView.findViewById(R.id.recipient_space);
         Space userSpace = (Space) mView.findViewById(R.id.user_space);
-        if (!message.getSender().equals(recipient.getId())) {
+        if (sender) {
             messageLayout.setGravity(Gravity.END);
             recipientSpace.setVisibility(View.GONE);
             userSpace.setVisibility(View.VISIBLE);
@@ -47,6 +49,7 @@ public class FirebaseMessageViewHolder extends RecyclerView.ViewHolder {
             recipientSpace.setVisibility(View.VISIBLE);
             userSpace.setVisibility(View.GONE);
             recipientImage.setVisibility(View.VISIBLE);
+            messageCard.setCardBackgroundColor(ContextCompat.getColor(mContext, R.color.colorPrimary));
             Picasso.with(mContext).load(recipient.getImageUrl()).resize(MAX_WIDTH, MAX_HEIGHT).centerCrop().into(recipientImage);
         }
 
